@@ -45,8 +45,8 @@ day-33_iss_alert/
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/your-username/day-33_iss_alert.git
-    cd day-33_iss_alert
+    git clone https://github.com/your-username/iss_alert.git
+    cd iss_alert
     ```
 
 2. Install dependencies:
@@ -137,6 +137,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 ## Acknowledgments
 
+- The basic idea for this project originates from Angela Yu's Python course (100 Days of Code: The Complete Python Pro Bootcamp) and has been expanded by the author, particularly with the addition of sending messages via Telegram.
 - [Open Notify API](http://open-notify.org/) for ISS location data.
 - [Sunrise-Sunset API](https://sunrise-sunset.org/api) for sunrise and sunset times.
 
