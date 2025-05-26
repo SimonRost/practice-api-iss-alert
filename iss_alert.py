@@ -20,24 +20,28 @@ else:
     raise ValueError("Invalid SENDING_MODE. Use 'telegram', 'email' or leave empty.")
 
 def get_iss_coords():
-    response = requests.get(url="http://api.open-notify.org/iss-now.json")
-    response.raise_for_status()
-
-    data = response.json()
-    longitude = float(data["iss_position"]["longitude"])
-    latitude = float(data["iss_position"]["latitude"])
-    iss_position = (longitude, latitude) # lat/long to adress: https://www.latlong.net/Show-Latitude-Longitude.html
-    return iss_position
+    try:
+        response = requests.get(url="http://api.open-notify.org/iss-now.json", timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        longitude = float(data["iss_position"]["longitude"])
+        latitude = float(data["iss_position"]["latitude"])
+        iss_position = (longitude, latitude) # lat/long to adress see: https://www.latlong.net/Show-Latitude-Longitude.html
+        return iss_position
+    except requests.exceptions.RequestException as e:
+        return f"[ERROR] Could not retrieve ISS position: {e}"
 
 def get_sun_hours(parameters):
-    response = requests.get("https://api.sunrise-sunset.org/json", params = parameters)
-    response.raise_for_status()
-
-    data = response.json()
-    sunrise_hour = int(data["results"]["sunrise"].split("T")[1].split(":")[0])
-    sunset_hour = int(data["results"]["sunset"].split("T")[1].split(":")[0])
-    daylight = (sunrise_hour, sunset_hour)
-    return daylight
+    try:
+        response = requests.get("https://api.sunrise-sunset.org/json", params = parameters, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        sunrise_hour = int(data["results"]["sunrise"].split("T")[1].split(":")[0])
+        sunset_hour = int(data["results"]["sunset"].split("T")[1].split(":")[0])
+        daylight = (sunrise_hour, sunset_hour)
+        return daylight
+    except requests.exceptions.RequestException as e:
+        return f"[ERROR] Could not retrieve sun data: {e}"
 
 def compare_coords(data_iss, data_mycoords):
     if data_mycoords[0]-5 <= data_iss[0] <= data_mycoords[0]+5 and data_mycoords[1]-5 <= data_iss[1] <= data_mycoords[1]+5:
@@ -76,26 +80,33 @@ def main():
 
     iss_coords = get_iss_coords()
     sun_hours = get_sun_hours(parameters)
-
-    if compare_coords(iss_coords, my_position) and check_daylight(sun_hours):
-        message = (
-            f"ISS in range.\n"
-            f"It's nighttime!\n"
-            f"ISS-Position: {iss_coords}\n"
-            f"My Position: {my_position}"
-        )
-        send_notification(message)            
-    elif compare_coords(iss_coords, my_position) and not check_daylight(sun_hours):
-        message = (
-            f"ISS in range.\n"
-            f"It's daytime!\n"
-            f"ISS-Position: {iss_coords}\n"
-            f"My Position: {my_position}"
-        )
-        send_notification(message)
+    
+    if isinstance(iss_coords, str):
+        print(iss_coords)
+        send_notification(iss_coords)
+    elif isinstance(sun_hours, str):
+        print(sun_hours)
+        send_notification(sun_hours)
     else:
-        print("ISS not in range")
-        print("ISS-Position: ", iss_coords)
-        print("My Position: ", my_position)
+        if compare_coords(iss_coords, my_position) and check_daylight(sun_hours):
+            message = (
+                f"ISS in range.\n"
+                f"It's nighttime!\n"
+                f"ISS-Position: {iss_coords}\n"
+                f"My Position: {my_position}"
+            )
+            send_notification(message)            
+        elif compare_coords(iss_coords, my_position) and not check_daylight(sun_hours):
+            message = (
+                f"ISS in range.\n"
+                f"It's daytime!\n"
+                f"ISS-Position: {iss_coords}\n"
+                f"My Position: {my_position}"
+            )
+            send_notification(message)
+        else:
+            print("ISS not in range")
+            print("ISS-Position: ", iss_coords)
+            print("My Position: ", my_position)
         
 main()
